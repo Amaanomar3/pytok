@@ -286,8 +286,8 @@ class Base:
         solve = await captcha_solver.CaptchaSolver(captcha_response, puzzle, piece).solve_captcha()
 
         page = self.parent._page
-        drag = page.locator('css=div.secsdk-captcha-drag-icon').first
-        bar = page.locator('css=div.captcha_verify_slide--slidebar').first
+        drag = page.locator('css=button.secsdk-captcha-drag-icon').first
+        bar = page.locator('css=div.cap-bg-UISheetGrouped3').first
         
         drag_bounding_box = await drag.bounding_box()
         bar_bounding_box = await bar.bounding_box()
