@@ -1,11 +1,8 @@
 import asyncio
 from datetime import datetime
 import random
-
 from pyclick import HumanCurve
-
 from playwright.async_api import expect
-
 from .. import exceptions, captcha_solver
 
 TOK_DELAY = 30
@@ -102,6 +99,15 @@ class Base:
         return content_element
 
     async def check_for_unavailable_or_captcha(self, unavailable_text):
+        """
+        This function is used to check for unavailable or captcha.
+        It is used to check for captcha in the case where the user is not logged in.
+
+        Example Usage
+        ```py
+        await api.user(username='therock').check_for_unavailable_or_captcha('User has no content')
+        ```
+        """
         page = self.parent._page
         captcha_element = get_captcha_element(page)
         unavailable_element = page.get_by_text(unavailable_text, exact=True)
@@ -147,6 +153,35 @@ class Base:
         unavailable_element = page.get_by_text(unavailable_text, exact=True)
         if await unavailable_element.is_visible():
             raise exceptions.NotAvailableException(f"Content is not available with message: '{unavailable_text}'")
+        
+    async def check_for_loading_error(self, loading_error_text):
+        page = self.parent._page
+        loading_error_element = page.get_by_text(loading_error_text, exact=True)
+        if await loading_error_element.is_visible():
+            raise exceptions.LoadingErrorException(f"Loading error with message: '{loading_error_text}'")
+        
+    async def check_and_retry_on_loading_error(self, loading_error_text):
+        """
+        This function is used to check if the page is showing a loading error.
+        If it is, it will click the refresh button on the page.
+
+        Example Usage
+        ```py
+        await api.user(username='therock').check_and_retry_on_loading_error('Sorry about that! Please try again later.')
+        ```
+        """
+        page = self.parent._page
+        max_attempts = 3
+        print("checking for loading error")
+        for attempt in range(max_attempts):
+            loading_error_element = page.get_by_text(loading_error_text, exact=True)
+            if await loading_error_element.is_visible():
+                print(f"Loading error detected on attempt {attempt + 1}, retrying...")
+                await page.get_by_text('Refresh', exact=True).click()
+                await asyncio.sleep(1)
+                continue
+            return
+        raise exceptions.LoadingErrorException(f"Loading error with message: '{loading_error_text}'")
 
     async def wait_for_requests(self, api_path, timeout=TOK_DELAY):
         page = self.parent._page

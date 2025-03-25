@@ -9,11 +9,13 @@ async def main(username):
         user_data = await user.info()
         print(user_data)
 
-        videos= []
+        videos = []
         async for video in user.videos():
             video_data = await video.info()
+            videos.append(video_data)
             print(video_data)
-
+        print(len(videos))
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fetch TikTok user data")
     parser.add_argument("--username", type=str, required=True, help="TikTok username to fetch data for")

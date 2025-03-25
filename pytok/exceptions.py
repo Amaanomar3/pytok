@@ -28,6 +28,10 @@ class InvalidJSONException(TikTokException):
 class NotAvailableException(TikTokException):
     """The requested object is not available in this region."""
 
+
+class LoadingErrorException(TikTokException):
+    """TikTok is showing a loading error"""
+
 class NoContentException(TikTokException):
     """TikTok returned no content"""
 

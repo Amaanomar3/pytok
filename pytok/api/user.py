@@ -108,6 +108,8 @@ class User(Base):
                     raise NotAvailableException("Content is not available")
 
         # try:
+        print("running checks")
+        await self.check_and_retry_on_loading_error('Something went wrong')
         await self.wait_for_content_or_unavailable_or_captcha('[data-e2e=user-post-item]',
                                                             "Couldn't find this account",
                                                             no_content_text=["No content", "This account is private"])
@@ -115,7 +117,6 @@ class User(Base):
         await page.wait_for_load_state('networkidle')
         await self.check_for_unavailable_or_captcha('User has no content')  # check for login
         await self.check_for_unavailable("Couldn't find this account")
-
         data_responses = self.get_responses('api/user/detail')
 
         if len(data_responses) > 0:
