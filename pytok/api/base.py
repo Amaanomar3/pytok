@@ -20,6 +20,8 @@ def get_captcha_element(page):
         .or_(page.get_by_text('Click on the shapes with the same size', exact=True)) \
         .or_(page.get_by_text('Drag the slider to fit the puzzle', exact=True).first)
 
+def get_loading_error_element(page):
+    return page.get_by_text('Sorry about that! Please try again later.', exact=True) 
 
 class Base:
 
@@ -167,14 +169,15 @@ class Base:
 
         Example Usage
         ```py
-        await api.user(username='therock').check_and_retry_on_loading_error('Sorry about that! Please try again later.')
+        await page.check_and_retry_on_loading_error('Sorry about that! Please try again later.')
         ```
         """
         page = self.parent._page
         max_attempts = 3
         print("checking for loading error")
+        await asyncio.sleep(3)
         for attempt in range(max_attempts):
-            loading_error_element = page.get_by_text(loading_error_text, exact=True)
+            loading_error_element = get_loading_error_element(page)
             if await loading_error_element.is_visible():
                 print(f"Loading error detected on attempt {attempt + 1}, retrying...")
                 await page.get_by_text('Refresh', exact=True).click()

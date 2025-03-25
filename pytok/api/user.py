@@ -110,6 +110,7 @@ class User(Base):
         # try:
         print("running checks")
         await self.check_and_retry_on_loading_error('Something went wrong')
+        await asyncio.sleep(3)
         await self.wait_for_content_or_unavailable_or_captcha('[data-e2e=user-post-item]',
                                                             "Couldn't find this account",
                                                             no_content_text=["No content", "This account is private"])
