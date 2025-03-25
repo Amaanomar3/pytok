@@ -110,7 +110,6 @@ class User(Base):
         # try:
         print("running checks")
         await self.check_and_retry_on_loading_error('Something went wrong')
-        await asyncio.sleep(3)
         await self.wait_for_content_or_unavailable_or_captcha('[data-e2e=user-post-item]',
                                                             "Couldn't find this account",
                                                             no_content_text=["No content", "This account is private"])
@@ -368,7 +367,6 @@ class User(Base):
         return all_videos, finished, cursor
 
     async def _get_videos_scroll(self, count, get_bytes):
-
         data_request_path = "api/post/item_list"
         data_urls = []
         tries = 1
@@ -382,7 +380,24 @@ class User(Base):
             await self.parent.request_delay()
             await self.slight_scroll_up()
             await self.parent.request_delay()
-            await self.scroll_to_bottom(speed=8)
+            
+            # Scroll to bottom with a slower speed for more reliable loading
+            await self.scroll_to_bottom(speed=4)
+            
+            # Wait for network requests to complete
+            await self.parent._page.wait_for_load_state('networkidle')
+            
+            # Wait for new videos to load with increased delay
+            await asyncio.sleep(3)  # Increased delay to ensure content loads
+            
+            # Wait for skeleton to disappear and new content to be visible
+            try:
+                await self.wait_until_not_skeleton_or_captcha('video-skeleton-container')
+                # Additional wait to ensure content is fully rendered
+                await asyncio.sleep(1)
+            except exceptions.TimeoutException:
+                # If skeleton doesn't disappear, continue anyway as content might be loaded
+                pass
 
             data_requests = [req for req in self.get_requests(data_request_path) if req.url not in data_urls]
             data_requests = [res for res in data_requests if f"secUid={self.sec_uid}" in res.url]
