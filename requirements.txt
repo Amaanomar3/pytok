@@ -5,6 +5,7 @@ pyvirtualdisplay
 opencv-python
 requests
 brotli
+TikTokApi
 pandas
 tqdm
 undetected_playwright
