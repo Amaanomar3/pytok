@@ -50,26 +50,55 @@ class Video(Base):
 
     def __init__(
             self,
-            id: Optional[str] = None,
-            username: Optional[str] = None,
             url: Optional[str] = None,
+            id: Optional[str] = None,
             data: Optional[dict] = None,
+            parent: Optional['PyTok'] = None,
     ):
         """
         You must provide the id or a valid url, else this will fail.
         """
+        # Initialize instance variables first
         self.id = id
-        self.username = username
+        self.username = None
+        self.as_dict = {}
+        self.parent = parent  # Set parent directly
+
+        # Then call super() which might need these attributes
+        super().__init__(parent)
+        
+        # Make sure parent is set
+        if not hasattr(self, 'parent') or self.parent is None:
+            from inspect import currentframe
+            frame = currentframe()
+            if frame and frame.f_back and 'self' in frame.f_back.f_locals:
+                # Try to get parent from caller
+                caller = frame.f_back.f_locals['self']
+                if hasattr(caller, 'parent'):
+                    self.parent = caller.parent
+            del frame  # Avoid reference cycles
+            
+        # Safe URL extraction
+        if url is not None:
+            try:
+                self.username = extract_user_id_from_url(url)
+                if self.id is None:
+                    self.id = extract_video_id_from_url(url)
+            except Exception as e:
+                if hasattr(self, 'parent') and self.parent:
+                    self.parent.logger.error(f"Error extracting info from URL: {str(e)}")
+                else:
+                    print(f"Error extracting info from URL: {str(e)}")
+        
+        # Data extraction
         if data is not None:
             self.as_dict = data
             self.__extract_from_data()
-        elif url is not None:
-            self.id = extract_video_id_from_url(url)
-            self.username = extract_user_id_from_url(url)
-
-        if self.id is None and url is None:
-            raise TypeError("You must provide id or url parameter.")
-
+        
+        # Final validation
+        if self.id is None and url is None and data is None:
+            raise TypeError("You must provide id, url, or data parameter.")
+            
     async def info(self, **kwargs) -> dict:
         """
         Returns a dictionary of all data associated with a TikTok Video.
@@ -148,6 +177,9 @@ class Video(Base):
             raise Exception("Failed to get video bytes")
 
     def _get_url(self) -> str:
+        if not self.id:
+            raise ValueError("Video ID is required to construct a URL")
+            
         if self.username is not None:
             return f"https://www.tiktok.com/@{self.username}/video/{self.id}"
         else:
@@ -536,18 +568,41 @@ class Video(Base):
             self.username = data["author"]["uniqueId"]
             self.create_time = datetime.fromtimestamp(int(data["createTime"]))
             self.stats = data["stats"]
-            self.author = self.parent.user(data=data["author"])
-            self.sound = self.parent.sound(data=data["music"])
-
-            self.hashtags = [
-                self.parent.hashtag(data=hashtag)
-                for hashtag in data.get("challenges", [])
-            ]
+            
+            # Ensure proper parent assignment for nested objects
+            # Only create these objects if we have a valid parent
+            if hasattr(self, 'parent') and self.parent:
+                try:
+                    # Use existing factory methods which handle parent properly
+                    self.author = self.parent.user(data=data["author"])
+                except Exception as e:
+                    print(f"Error creating author: {str(e)}")
+                    
+                try:
+                    # Use existing factory methods which handle parent properly
+                    self.sound = self.parent.sound(data=data["music"])
+                except Exception as e:
+                    print(f"Error creating sound: {str(e)}")
+                    
+                try:
+                    # Create hashtags using factory method
+                    self.hashtags = []
+                    for hashtag in data.get("challenges", []):
+                        try:
+                            hashtag_obj = self.parent.hashtag(data=hashtag)
+                            self.hashtags.append(hashtag_obj)
+                        except Exception as hashtag_err:
+                            print(f"Error creating individual hashtag: {str(hashtag_err)}")
+                except Exception as e:
+                    print(f"Error creating hashtags: {str(e)}")
 
         if self.id is None:
-            Video.parent.logger.error(
-                f"Failed to create Video with data: {data}\nwhich has keys {data.keys()}"
-            )
+            if hasattr(self, 'parent') and self.parent:
+                self.parent.logger.error(
+                    f"Failed to create Video with data: {data}\nwhich has keys {data.keys()}"
+                )
+            else:
+                print(f"Failed to create Video with data: {data}\nwhich has keys {data.keys()}")
 
     def __repr__(self):
         return self.__str__()

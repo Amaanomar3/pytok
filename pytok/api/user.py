@@ -55,11 +55,14 @@ class User(Base):
             user_id: Optional[str] = None,
             sec_uid: Optional[str] = None,
             data: Optional[dict] = None,
+            parent: Optional[PyTok] = None,
     ):
         """
         You must provide the username or (user_id and sec_uid) otherwise this
         will not function correctly.
         """
+        super().__init__(parent)
+            
         self.__update_id_sec_uid_username(user_id, sec_uid, username)
         if data is not None:
             self.as_dict = data
@@ -241,8 +244,24 @@ class User(Base):
 
             if videos:
                 amount_yielded += len(videos)
+                # Fixed video object creation to use explicit id parameter
+                video_objs = []
                 for video in videos:
-                    yield self.parent.video(data=video)
+                    try:
+                        if 'id' in video:
+                            # Explicitly pass parent to ensure it's set
+                            video_obj = self.parent.video(id=video['id'], data=video, parent=self.parent)
+                            # Double-check parent is set
+                            if not hasattr(video_obj, 'parent') or video_obj.parent is None:
+                                video_obj.parent = self.parent
+                            video_objs.append(video_obj)
+                        else:
+                            self.parent.logger.warning(f"Skipping video without ID: {video.get('desc', 'No description')}")
+                    except Exception as e:
+                        self.parent.logger.error(f"Error creating video object: {str(e)}")
+
+                for video in video_objs:
+                    yield video
 
             has_more = res.get("hasMore")
             if not has_more:
@@ -353,12 +372,27 @@ class User(Base):
                 video_data = await video_response.json()
                 if video_data.get('itemList'):
                     videos = video_data['itemList']
-                    video_objs = [self.parent.video(data=video) for video in videos]
+                    # Construct video objects with explicit id parameter instead of relying on URL parsing
+                    video_objs = []
+                    for video in videos:
+                        try:
+                            # Make sure we have a valid ID before creating the video object
+                            if 'id' in video:
+                                # Explicitly pass parent to ensure it's set
+                                video_obj = self.parent.video(id=video['id'], data=video, parent=self.parent)
+                                # Double-check parent is set
+                                if not hasattr(video_obj, 'parent') or video_obj.parent is None:
+                                    video_obj.parent = self.parent
+                                video_objs.append(video_obj)
+                            else:
+                                self.parent.logger.warning(f"Skipping video without ID: {video.get('desc', 'No description')}")
+                        except Exception as e:
+                            self.parent.logger.error(f"Error creating video object: {str(e)}")
                     all_videos += video_objs
                 finished = not video_data.get('hasMore', False)
                 cursor = video_data.get('cursor', 0)
             except Exception as ex:
-                pass
+                self.parent.logger.error(f"Error processing video response: {str(ex)}")
 
         if len(video_responses) == 0:
             raise ApiFailedException("Failed to get videos from API")
@@ -382,7 +416,7 @@ class User(Base):
             await self.parent.request_delay()
             
             # Scroll to bottom with a slower speed for more reliable loading
-            await self.scroll_to_bottom(speed=4)
+            await self.scroll_to_bottom(speed=10)
             
             # Wait for network requests to complete
             await self.parent._page.wait_for_load_state('networkidle')
@@ -433,7 +467,21 @@ class User(Base):
                     await self._load_each_video(videos)
 
                 amount_yielded += len(videos)
-                video_objs = [self.parent.video(data=video) for video in videos]
+                # Fixed video object creation to use explicit id parameter
+                video_objs = []
+                for video in videos:
+                    try:
+                        if 'id' in video:
+                            # Explicitly pass parent to ensure it's set
+                            video_obj = self.parent.video(id=video['id'], data=video, parent=self.parent)
+                            # Double-check parent is set
+                            if not hasattr(video_obj, 'parent') or video_obj.parent is None:
+                                video_obj.parent = self.parent
+                            video_objs.append(video_obj)
+                        else:
+                            self.parent.logger.warning(f"Skipping video without ID: {video.get('desc', 'No description')}")
+                    except Exception as e:
+                        self.parent.logger.error(f"Error creating video object: {str(e)}")
 
                 for video in video_objs:
                     yield video

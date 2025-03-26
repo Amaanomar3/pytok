@@ -35,10 +35,13 @@ class Sound:
     author: Optional[User]
     """The author of the song (if it exists)"""
 
-    def __init__(self, id: Optional[str] = None, data: Optional[str] = None):
+    def __init__(self, id: Optional[str] = None, data: Optional[str] = None, parent: Optional['PyTok'] = None):
         """
         You must provide the id of the sound or it will not work.
         """
+        # Set parent directly as an instance attribute
+        self.parent = parent
+        
         if data is not None:
             self.as_dict = data
             self.__extract_from_data()
@@ -46,6 +49,17 @@ class Sound:
             raise TypeError("You must provide id parameter.")
         else:
             self.id = id
+            
+        # Make sure parent is set
+        if not hasattr(self, 'parent') or self.parent is None:
+            from inspect import currentframe
+            frame = currentframe()
+            if frame and frame.f_back and 'self' in frame.f_back.f_locals:
+                # Try to get parent from caller
+                caller = frame.f_back.f_locals['self']
+                if hasattr(caller, 'parent'):
+                    self.parent = caller.parent
+            del frame  # Avoid reference cycles
 
     def info(self, use_html=False, **kwargs) -> dict:
         """

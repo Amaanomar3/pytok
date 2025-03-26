@@ -39,10 +39,14 @@ class Hashtag(Base):
         name: Optional[str] = None,
         id: Optional[str] = None,
         data: Optional[dict] = None,
+        parent: Optional['PyTok'] = None,
     ):
         """
         You must provide the name or id of the hashtag.
         """
+        # Initialize Base class with parent
+        super().__init__(parent)
+        
         self.name = name
         self.id = id
 
@@ -51,6 +55,17 @@ class Hashtag(Base):
             self.__extract_from_data()
         else:
             self.as_dict = None
+            
+        # Double-check that parent is set
+        if not hasattr(self, 'parent') or self.parent is None:
+            from inspect import currentframe
+            frame = currentframe()
+            if frame and frame.f_back and 'self' in frame.f_back.f_locals:
+                # Try to get parent from caller
+                caller = frame.f_back.f_locals['self']
+                if hasattr(caller, 'parent'):
+                    self.parent = caller.parent
+            del frame  # Avoid reference cycles
 
     async def info(self, **kwargs) -> dict:
         """

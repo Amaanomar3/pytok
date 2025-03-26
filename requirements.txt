@@ -8,3 +8,6 @@ tqdm
 undetected_playwright
 browserforge
 pyclick
+quart
+quart-cors
+hypercorn

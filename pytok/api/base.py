@@ -24,6 +24,9 @@ def get_loading_error_element(page):
     return page.get_by_text('Sorry about that! Please try again later.', exact=True) 
 
 class Base:
+    def __init__(self, parent=None):
+        # Make sure parent is always set
+        self.parent = parent
 
     async def check_initial_call(self, url):
         async with self.wait_for_requests(url) as event:
@@ -204,7 +207,7 @@ class Base:
     async def get_response_body(self, response):
         return await response.body()
 
-    async def scroll_to_bottom(self, speed=4):
+    async def scroll_to_bottom(self, speed=20):
         page = self.parent._page
         current_scroll_position = await page.evaluate(
             "() => document.documentElement.scrollTop || document.body.scrollTop;")

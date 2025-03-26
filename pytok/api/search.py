@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import time
-from typing import TYPE_CHECKING, Iterator, Type
+from typing import TYPE_CHECKING, Iterator, Type, Optional
 from urllib.parse import urlencode
 import re
 
@@ -23,8 +23,22 @@ class Search(Base):
 
     parent: PyTok
 
-    def __init__(self, search_term):
+    def __init__(self, search_term, parent: Optional['PyTok'] = None):
+        # Initialize Base first
+        super().__init__(parent)
+        
         self.search_term = search_term
+        
+        # Make sure parent is set
+        if not hasattr(self, 'parent') or self.parent is None:
+            from inspect import currentframe
+            frame = currentframe()
+            if frame and frame.f_back and 'self' in frame.f_back.f_locals:
+                # Try to get parent from caller
+                caller = frame.f_back.f_locals['self']
+                if hasattr(caller, 'parent'):
+                    self.parent = caller.parent
+            del frame  # Avoid reference cycles
 
     def videos(self, count=28, offset=0, **kwargs) -> Iterator[Video]:
         """

@@ -42,24 +42,28 @@ def extract_tag_contents(html):
 
 
 def extract_video_id_from_url(url):
-    url = requests.head(url=url, allow_redirects=True).url
-    if "@" in url and "/video/" in url:
-        return url.split("/video/")[1].split("?")[0]
-    else:
-        raise TypeError(
-            "URL format not supported. Below is an example of a supported url.\n"
-            "https://www.tiktok.com/@therock/video/6829267836783971589"
-        )
+    if url is None:
+        return None
+    try:
+        url = requests.head(url=url, allow_redirects=True).url
+        if "@" in url and "/video/" in url:
+            return url.split("/video/")[1].split("?")[0]
+    except Exception:
+        # Return None for any errors during extraction
+        return None
+    return None
 
 def extract_user_id_from_url(url):
-    url = requests.head(url=url, allow_redirects=True).url
-    if "@" in url and "/video/" in url:
-        return url.split("/video/")[0].split("@")[1]
-    else:
-        raise TypeError(
-            "URL format not supported. Below is an example of a supported url.\n"
-            "https://www.tiktok.com/@therock/video/6829267836783971589"
-        )
+    if url is None:
+        return None
+    try:
+        url = requests.head(url=url, allow_redirects=True).url
+        if "@" in url and "/video/" in url:
+            return url.split("/video/")[0].split("@")[1]
+    except Exception:
+        # Return None for any errors during extraction
+        return None
+    return None
 
 def add_if_not_replace(text, pat, replace, add):
     if re.search(pat, text):
