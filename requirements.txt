@@ -1,9 +1,9 @@
 pymongo==4.6.1
-pytok>=0.0.9
 playwright==1.40.0
 python-dotenv==1.0.0
 pyvirtualdisplay
 opencv-python
+requests
 brotli
 pandas
 tqdm
