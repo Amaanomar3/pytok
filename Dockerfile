@@ -39,6 +39,7 @@ RUN python -m playwright install chromium --with-deps
 
 # Copy project files
 COPY pythonScraper.py .
+COPY pytok/ /app/pytok
 COPY .env .
 
 # Create log directory
@@ -49,9 +50,8 @@ RUN echo "0 0 * * * cd /app && python /app/pythonScraper.py --headless true >> /
 RUN chmod 0644 /etc/cron.d/tiktok-scraper
 RUN crontab /etc/cron.d/tiktok-scraper
 
-# Create entrypoint script
-RUN echo '#!/bin/bash\nservice cron start\ntail -f /app/logs/scraper.log' > /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
 
 # Command to run
 CMD ["/app/entrypoint.sh"] 
