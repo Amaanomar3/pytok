@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y \
     cron \
     xvfb \
     xauth \
+    python3-tk \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
