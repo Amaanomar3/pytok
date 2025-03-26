@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  tiktok-scraper:
+    build: .
+    container_name: tiktok-scraper
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    env_file:
+      - .env 

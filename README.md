@@ -1,4 +1,3 @@
-
 [![DOI](https://zenodo.org/badge/555492190.svg)](https://zenodo.org/doi/10.5281/zenodo.12802713)
 
 # pytok
@@ -109,4 +108,112 @@ The user dataframe will contain the following columns:
 |`num_videos`| How many videos the user has made |
 |`num_likes`| How many total likes the user has had |
 |`createtime`| When the user account was made. This is derived from the `id` field, and can occasionally be incorrect with a very low unix epoch such as 1971 |
+
+# TikTok Scraper
+
+A containerized daily cron service that scrapes TikTok accounts and saves video data to MongoDB.
+
+## Features
+
+- Automated daily runs at midnight UTC
+- Tracks view counts for TikTok videos
+- Stores fresh data each day, preserving historical data
+- Multi-browser support with automatic rotation
+- Headless browser operation for server environments
+- Docker containerization for easy deployment
+
+## Requirements
+
+- Docker and Docker Compose
+- MongoDB database
+- Linux/Unix VPS (Debian/Ubuntu recommended)
+
+## Deployment
+
+1. **Clone this repository to your VPS**
+   ```bash
+   git clone https://your-repo-url.git tiktok-scraper
+   cd tiktok-scraper
+   ```
+
+2. **Run the installation script**
+   ```bash
+   chmod +x install.sh
+   ./install.sh
+   ```
+
+3. **Configure your MongoDB connection**
+   
+   The installer will create a `.env` file from the template. Edit it with your MongoDB details:
+   ```bash
+   nano .env
+   ```
+
+4. **Build and start the container**
+   ```bash
+   docker-compose up -d
+   ```
+
+## Usage
+
+The TikTok scraper will run automatically at midnight UTC every day.
+
+### Running Manually
+
+To run the scraper immediately rather than waiting for the cron job:
+
+```bash
+./run_now.sh
+```
+
+### Viewing Logs
+
+Logs are stored in the `logs` directory:
+
+```bash
+cat logs/scraper.log
+```
+
+Or tail the logs to see continuous output:
+
+```bash
+tail -f logs/scraper.log
+```
+
+### Managing the Service
+
+- **Stop the service**:
+  ```bash
+  docker-compose down
+  ```
+
+- **Restart the service**:
+  ```bash
+  docker-compose restart
+  ```
+
+- **View container status**:
+  ```bash
+  docker ps
+  ```
+
+## Updating the Scraper
+
+To update the scraper with new code:
+
+1. Pull the latest changes:
+   ```bash
+   git pull
+   ```
+
+2. Rebuild and restart the container:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+## Troubleshooting
+
+- **Container not starting**: Check Docker logs with `docker logs tiktok-scraper`
+- **MongoDB connection issues**: Verify your MongoDB connection string in the `.env` file
+- **Browser errors**: Ensure the container has enough memory for browser processes
 
