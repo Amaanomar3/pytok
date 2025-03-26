@@ -1,3 +1,9 @@
+# Set up virtual display first - before any GUI imports
+import os
+from pyvirtualdisplay import Display
+display = Display(visible=0, size=(1920, 1080))
+display.start()
+
 import asyncio
 import uuid
 import logging

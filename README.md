@@ -109,111 +109,99 @@ The user dataframe will contain the following columns:
 |`num_likes`| How many total likes the user has had |
 |`createtime`| When the user account was made. This is derived from the `id` field, and can occasionally be incorrect with a very low unix epoch such as 1971 |
 
-# TikTok Scraper
+# TikTok Scraper with Virtual Display
 
-A containerized daily cron service that scrapes TikTok accounts and saves video data to MongoDB.
+This repository contains a containerized TikTok scraper that uses a virtual display to handle GUI automation components like PyAutoGUI in a headless environment.
 
-## Features
+## Overview
 
-- Automated daily runs at midnight UTC
-- Tracks view counts for TikTok videos
-- Stores fresh data each day, preserving historical data
-- Multi-browser support with automatic rotation
-- Headless browser operation for server environments
-- Docker containerization for easy deployment
+The scraper uses:
+- PyTok library for TikTok data extraction
+- MongoDB for data storage
+- Playwright for browser automation
+- Xvfb for creating a virtual X display
 
-## Requirements
+## Installation
 
-- Docker and Docker Compose
-- MongoDB database
-- Linux/Unix VPS (Debian/Ubuntu recommended)
+1. Make sure Docker and Docker Compose are installed on your system.
 
-## Deployment
+2. Clone this repository:
+```bash
+git clone <repository-url>
+cd tiktok-scraper
+```
 
-1. **Clone this repository to your VPS**
-   ```bash
-   git clone https://your-repo-url.git tiktok-scraper
-   cd tiktok-scraper
-   ```
+3. Create an `.env` file with your MongoDB connection details:
+```
+MONGO_URI=mongodb://your-mongo-uri
+DB_NAME=tiktok_data
+POSTS_COLLECTION=posts
+CREATOR_COLLECTION=Creator
+NUM_BROWSERS=2
+MAX_ACCOUNTS_PER_BROWSER=20
+HEADLESS=true
+```
 
-2. **Run the installation script**
-   ```bash
-   chmod +x install.sh
-   ./install.sh
-   ```
+## Building and Running
 
-3. **Configure your MongoDB connection**
-   
-   The installer will create a `.env` file from the template. Edit it with your MongoDB details:
-   ```bash
-   nano .env
-   ```
+Build and start the container:
 
-4. **Build and start the container**
-   ```bash
-   docker-compose up -d
-   ```
+```bash
+docker-compose up -d
+```
 
-## Usage
+This will:
+1. Build the Docker image with all required dependencies
+2. Start the container in detached mode
+3. Configure a cron job to run the scraper daily at midnight UTC
+4. Create a virtual display for GUI operations
+5. Set up logging to the `logs` directory
 
-The TikTok scraper will run automatically at midnight UTC every day.
+## Manual Execution
 
-### Running Manually
-
-To run the scraper immediately rather than waiting for the cron job:
+To manually trigger the scraper (without waiting for the cron job):
 
 ```bash
 ./run_now.sh
 ```
 
-### Viewing Logs
+This script:
+1. Sets up a virtual display in the container
+2. Runs the Python scraper
+3. Shows the output in your terminal
 
-Logs are stored in the `logs` directory:
+## Logs
 
-```bash
-cat logs/scraper.log
-```
-
-Or tail the logs to see continuous output:
+Logs are stored in the `logs` directory and can be viewed with:
 
 ```bash
 tail -f logs/scraper.log
 ```
 
-### Managing the Service
-
-- **Stop the service**:
-  ```bash
-  docker-compose down
-  ```
-
-- **Restart the service**:
-  ```bash
-  docker-compose restart
-  ```
-
-- **View container status**:
-  ```bash
-  docker ps
-  ```
-
-## Updating the Scraper
-
-To update the scraper with new code:
-
-1. Pull the latest changes:
-   ```bash
-   git pull
-   ```
-
-2. Rebuild and restart the container:
-   ```bash
-   docker-compose up -d --build
-   ```
-
 ## Troubleshooting
 
-- **Container not starting**: Check Docker logs with `docker logs tiktok-scraper`
-- **MongoDB connection issues**: Verify your MongoDB connection string in the `.env` file
-- **Browser errors**: Ensure the container has enough memory for browser processes
+### DISPLAY Error
+If you encounter errors related to the DISPLAY environment variable, check:
+1. That Xvfb is running correctly in the container
+2. That the DISPLAY environment variable is set to `:99`
+3. That all GUI libraries have access to the virtual display
+
+You can debug by connecting to the container:
+```bash
+docker exec -it tiktok-scraper bash
+```
+
+### Container Restart Loop
+If the container keeps restarting:
+1. Check the logs: `docker logs tiktok-scraper`
+2. Make sure the entrypoint script has the correct permissions
+3. Verify that Xvfb is installed correctly
+
+## Advanced Configuration
+
+For advanced configuration options, edit the `.env` file or modify the `pythonScraper.py` file directly.
+
+## License
+
+[License information]
 
